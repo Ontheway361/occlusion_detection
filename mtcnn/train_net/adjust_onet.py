@@ -32,8 +32,8 @@ def parse_args():
 
     parser.add_argument('--anno_file',  type=str,   default=os.path.join(anno_dir, 'onet/train_anno_48.txt'))
     parser.add_argument('--eval_file',  type=str,   default=os.path.join(anno_dir, 'onet/eval_anno_48.txt'))
-    parser.add_argument('--model_path', type=str,   default='model/onetv1')
-    parser.add_argument('--factors',    type=list,  default=[0.1, 0.3, 5])
+    parser.add_argument('--model_path', type=str,   default='model/onet_v3')
+    parser.add_argument('--factors',    type=list,  default=[0.1, 0.7, 8])
     parser.add_argument('--use_lmkinfo',type=bool,  default=True)
     parser.add_argument('--imgsize',    type=int,   default=48)
     parser.add_argument('--end_epoch',  type=int,   default=20)

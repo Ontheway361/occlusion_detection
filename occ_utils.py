@@ -20,7 +20,7 @@ class HistOccBlock(object):
         self.args      = args
         self.model     = None
         self.imgs_list = None
-        self.bgr_prob  = np.zeros((3, 256), dtype=np.float)
+        self.pdf_list  = np.zeros((3, 256), dtype=np.float)
 
 
     def _prepare(self):
@@ -97,12 +97,18 @@ class HistOccBlock(object):
         pos_diff = self.pos_pdf - in_pdf
         neg_diff = self.neg_pdf - in_pdf
 
-        pos_dist = np.linalg.norm(pos_diff, ord=1, axis=1)
-        neg_dist = np.linalg.norm(neg_diff, ord=1, axis=1)
+        pos_dist = np.linalg.norm(pos_diff, ord=2, axis=1)
+        neg_dist = np.linalg.norm(neg_diff, ord=2, axis=1)
 
         return pos_dist, neg_dist
 
-
+    
+    def _estimate_var(self, pdf_list):
+        ''' Estimate the variables of mean and variance for each bin '''
+        
+        
+    
+    
     def _hist_go(self):
         '''
         Statistic the info of resz_block
@@ -113,6 +119,7 @@ class HistOccBlock(object):
         '''
 
         face_count = 1;  # skip zero
+        pdf_list = []
         for img_path in self.imgs_list:
 
             try:
@@ -131,8 +138,10 @@ class HistOccBlock(object):
                     bbox, landmark = self._fliter_doc_bbox(bboxes, landmarks)
                 face_count += 1
                 block = self._fetch_block(img, landmark)
-                self.bgr_prob += self._statistics(block)
-        self.bgr_prob /= face_count
+                bgr_prob = self._statistics(block)
+                self.bgr_prob += bgr_prob
+                pdf_list.append(bgr_prob)
+        
         np.save('pdf/%s.npy' % self.args.folder, self.bgr_prob)
 
 
@@ -168,15 +177,15 @@ class HistOccBlock(object):
                       (img_path.split('/')[-1], sum(pos_dist), sum(neg_dist), cls_str))
                 count_total += 1
 
-        print('There are %d test_imgs, %d pos_imgs' % (count_total, count_pos))
+        print('There are %d test_imgs, %d pos_imgs, acc : %.4f' % (count_total, count_pos, count_pos/count_total))
 
     def runner(self):
         ''' Pipeline of HistOccBlock '''
 
         self._prepare()
-        # self._hist_go()
-        # visual_prob(self.bgr_prob, 'pdf/%s.jpg' % self.args.folder, self.args.num_bins)
-        self._simi_go()
+        self._hist_go()
+        visual_prob(self.bgr_prob, 'pdf/%s.jpg' % self.args.folder, self.args.num_bins)
+        # self._simi_go()
 
 
 
@@ -186,14 +195,13 @@ def parse_args():
 
     parser.add_argument('--pnet_file', type=str, default='model/pnet.pt')
     parser.add_argument('--rnet_file', type=str, default='model/rnet.pt')
-    parser.add_argument('--onet_file', type=str, default='model/onet.pt')
+    parser.add_argument('--onet_file', type=str, default='model/onet_epoch_7.pt')
     parser.add_argument('--prob_thres',type=list,default=[0.6, 0.7, 0.7])  # CORE
-    parser.add_argument('--use_cuda',  type=bool,default=False)   # TODO
+    parser.add_argument('--use_cuda',  type=bool,default=True)   # TODO
     parser.add_argument('--gpu_ids',   type=list,default=[0, 1]) # TODO
-    # parser.add_argument('--data_dir',  type=str, default='/home/jovyan/gpu3-data2/lujie/imgs_occ/')
-    parser.add_argument('--data_dir',  type=str, default='/Users/relu/data/deep_learning/face_landmark/imgs_occ/')
-    parser.add_argument('--folder',    type=str, default='consist_pair')  # {occ_pair, consist_pair, wrong_pair}
-    parser.add_argument('--img_type',  type=str, default='input')     # {source, input}
+    parser.add_argument('--data_dir',  type=str, default='/home/jovyan/gpu3-data2/lujie/imgs_occ/')
+#     parser.add_argument('--data_dir',  type=str, default='/Users/relu/data/deep_learning/face_landmark/imgs_occ/')
+    parser.add_argument('--folder',    type=str, default='faces_1031')  # 
     parser.add_argument('--num_bins',  type=int, default=32)
 
     args = parser.parse_args()

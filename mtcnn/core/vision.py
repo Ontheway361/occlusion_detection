@@ -37,8 +37,8 @@ def visual_face(img, bboxes, landmarks, save_name, re_scale = 1, fontScale = 32)
         font = ImageFont.truetype('Pillow/Tests/fonts/FreeMono.ttf', fontScale)
     except:
         # font_path = os.path.join(os.environ['HOME'], '.fonts', 'freefont', 'FreeMono.ttf')
-        font_path = os.path.join('/Library/Fonts', 'Georgia Italic.ttf') # local
-        # font_path = os.path.join('/usr/share/fonts/truetype/liberation', 'LiberationMono-BoldItalic.ttf') # gpu_server
+        # font_path = os.path.join('/Library/Fonts', 'Georgia Italic.ttf') # local
+        font_path = os.path.join('/usr/share/fonts/truetype/liberation', 'LiberationMono-BoldItalic.ttf') # gpu_server
         font = ImageFont.truetype(font_path, fontScale)
 
     for i in range(bboxes.shape[0]):

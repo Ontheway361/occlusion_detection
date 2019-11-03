@@ -36,44 +36,40 @@ class Fetch_URL_Image(object):
         ''' Preprocess the raw url_csv file '''
         
         df_csv = pd.read_csv(osp.join(self.args.root_dir, 'csv_raw', self.args.url_csv))
-        df_csv.drop_duplicates(subset=['source', 'input'], keep='last', inplace=True)
-        df_csv = df_csv[df_csv['anno_label'] == self.args.map_key]
+        df_csv.drop_duplicates(subset=['img_url'], keep='last', inplace=True)
+        #df_csv = df_csv[df_csv['anno_label'] == self.args.map_key]  
         self.df_csv = df_csv
         
 
     def _download_images(self):
         ''' Downloading the url_imgs '''
         
-        badurl_file = osp.join(self.args.root_dir, 'bad_url/%s.txt' % \
-                                   self.args.url_csv.split('.')[0])
-        badurl_f  = open(badurl_file, 'a+')
-        goodurl_count, badurl_count = 0, 0
+#         badurl_file = osp.join(self.args.root_dir, 'bad_url/%s.txt' % \
+#                                    self.args.url_csv.split('.')[0])
+#         badurl_f  = open(badurl_file, 'a+')
+    
+        save_dir = osp.join(self.args.root_dir, 'faces_1031')
+        if not osp.exists(save_dir):
+            os.mkdir(save_dir)
+        
+        goodurl_count =  0
+        note_info = []
         for idx, row in self.df_csv.iterrows():
             
-            source_url, input_url = row['source'], row['input']
-            source_url.rstrip('\n')
-            input_url.rstrip('\n')
+            img_url = row['img_url'].rstrip('\n')
+            save_img  = osp.join(save_dir, '%d.jpg' % goodurl_count)
             
-            try:
-                folder_name = 'wrong_pair_%d' % goodurl_count
-                save_dir    = osp.join(self.args.root_dir, 'wrong_pair/%s'% folder_name)
-                if not osp.exists(save_dir):
-                    os.mkdir(save_dir)
-                save_s_img  = osp.join(save_dir, 'source_%d.jpg' % goodurl_count)
-                save_i_img  = osp.join(save_dir, 'input_%d.jpg' % goodurl_count) 
-                
-                s_img = request.urlretrieve(source_url, save_s_img)
-                i_img = request.urlretrieve(input_url,  save_i_img)
+            try:  
+                s_img = request.urlretrieve(img_url, save_img)
             except:
-                error_info = source_url + ' ' + input_url + '\n'
-                badurl_f.write(error_info)
-                badurl_count += 1
+                print('Downloading %s failed ...' % img_url)
             else:
                 goodurl_count += 1
-  
-        badurl_f.close()
-        print('there are %d urls, good : %d, bad : %d' % \
-              (self.df_csv.shape[0], goodurl_count, badurl_count))
+                note_info.append([save_img, row['img_type'], row['anno_label']])
+            print('%d url was processed ...' % idx)
+        df_note = pd.DataFrame(note_info, columns=['img_path', 'img_type', 'anno_label'])
+        df_note.to_csv(osp.join(self.args.root_dir, 'csv_raw', self.args.note_csv), index=None)
+        print('there are %d urls, good : %d' % (self.df_csv.shape[0], goodurl_count))
                 
         
     def runner(self):
@@ -89,7 +85,8 @@ def urlimgs_config():
     parser = argparse.ArgumentParser(description='Download URL images')
     
     parser.add_argument('--root_dir', type=str, default=root_dir)
-    parser.add_argument('--url_csv',  type=str, default='1024_night.csv')
+    parser.add_argument('--url_csv',  type=str, default='self_anno_occ_20191031.csv')
+    parser.add_argument('--note_csv', type=str, default='note_1031.csv')
     parser.add_argument('--map_key',  type=str, default=1)
     parser.add_argument('--timeout',  type=int, default=10)
 
