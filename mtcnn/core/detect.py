@@ -17,17 +17,17 @@ class MtcnnDetector(object):
     ''' P,R,O net face detection and landmarks align '''
 
     def  __init__(self, args):
-        
+
         self.args          = args
         self.min_face_size = 24   # for what ?
         self.scale_factor  = 0.709
         self.create_mtcnn_net()
-        
-        
+
+
     def create_mtcnn_net(self):
         ''' Create the mtcnn model '''
         pnet, rnet, onet = None, None, None
-        
+
         if len(self.args.pnet_file) > 0:
             pnet = PNet(use_cuda=self.args.use_cuda)
             if self.args.use_cuda:
@@ -57,7 +57,7 @@ class MtcnnDetector(object):
                 onet.load_state_dict(torch.load(self.args.onet_file, \
                                                 map_location=lambda storage, loc: storage))
             onet.eval()
-        
+
         self.pnet_detector = pnet
         self.rnet_detector = rnet
         self.onet_detector = onet
@@ -397,7 +397,7 @@ class MtcnnDetector(object):
         cls_map   = cls_map.cpu().data.numpy()
         reg       = reg.cpu().data.numpy()
         landmark  = landmark.cpu().data.numpy()
-        
+
         keep_inds = np.where(cls_map > self.args.prob_thres[2])[0]
         if len(keep_inds) > 0:
             boxes    = dets[keep_inds]
@@ -406,17 +406,17 @@ class MtcnnDetector(object):
             landmark = landmark[keep_inds]
         else:
             return None, None
-        
+
         bw = boxes[:, 2] - boxes[:, 0] + 1
         bh = boxes[:, 3] - boxes[:, 1] + 1
-        
+
         align_x1 = boxes[:, 0] + reg[:, 0] * bw
         align_y1 = boxes[:, 1] + reg[:, 1] * bh
         align_x2 = boxes[:, 2] + reg[:, 2] * bw
         align_y2 = boxes[:, 3] + reg[:, 3] * bh
 
         boxes_align = np.vstack([align_x1, align_y1, align_x2, align_y2, cls[:, 0]]).T
-        
+
         # TODO :: 68 <--> 5
         lmk_align = landmark.copy()
         x_idx   = [2*s for s in range(68)]
@@ -424,8 +424,8 @@ class MtcnnDetector(object):
         for idx in range(lmk_align.shape[0]):
             lmk_align[idx, x_idx] = boxes[idx, 0] + lmk_align[idx, x_idx] * bw[idx]
             lmk_align[idx, y_idx] = boxes[idx, 1] + lmk_align[idx, y_idx] * bh[idx]
-        
-        
+
+
         keep = utils.nms(boxes_align, 0.7, mode='Minimum')
         if len(keep) == 0:
             return None, None
@@ -465,7 +465,7 @@ class MtcnnDetector(object):
         # onet
         if self.onet_detector:
             boxes_align, landmark_align = self.detect_onet(img, boxes_align)  # CORE
-            if boxes_align is None: 
+            if boxes_align is None:
                 return np.array([]), np.array([])
 
             t3 = time.time() - t

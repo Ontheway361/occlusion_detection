@@ -16,7 +16,7 @@ from IPython import embed
 def visual_prob(prob_array, save_path, num_bins = 64):
     ''' Visual the curve of pixel_prob '''
 
-    x_axis = np.array([ i for i in range(256)])
+    x_axis = np.array([ i for i in range(prob_array.shape[1])])
     fig = plt.figure()
     ax1 = fig.add_subplot(131)
     ax1.plot(x_axis, prob_array[0], 'b.--', linewidth=1.2)
